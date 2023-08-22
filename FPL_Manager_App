@@ -7,27 +7,46 @@ def get_manager_data(manager_id):
         response = requests.get(manager_url)
         manager_data = response.json()
 
+        if manager_data:
+            manager_name = manager_data['player_first_name'] + ' ' + manager_data['player_last_name']
+            team_name = manager_data['name']
+            total_points = manager_data['summary_overall_points']
+            rank = manager_data['summary_overall_rank']
+            gw_num = manager_data['current_event']
+            gw_points = manager_data['summary_event_points']
+            transfers_made = manager_data['last_deadline_total_transfers']
+
+            print(f"Manager: {manager_name} (ID: {manager_id})")
+            print(f"Team Name: {team_name}")
+            print(f"Overall Rank: {rank}")
+            print(f"Total Points: {total_points}")
+            print(f"GW {gw_num} Points: {gw_points}")
+            print(f"Transfers Made: {transfers_made}")
+        else:
+            print("Manager data retrieval failed.")
+
+        
         return manager_data
     except Exception as e:
         print("Error fetching manager data:", e)
         return None
 
+def get_player_data(gw_num):
+    # Fetch manager data using requests
+    player_url = f"https://fantasy.premierleague.com/api/event/2/live/"
+    response = requests.get(player_url)
+    player_data = response.json()
+    player_id = player_data['id']
+    player_xgi = player_data['expected_goal_involvements']
+    player_xg = player_data['expected_goals']
+    player_xa = player_data['expected_assists']
+    if player_data['expected_goal_involvements']>player_data['expected_goals'] + player_data['expected_assists']:
+        print(f"Player ID: ")
+
 if __name__ == "__main__":
     manager_id = 501662  # Change this to the desired manager ID
+    gw_num = 2
+    get_manager_data(manager_id)
+    get_player_data(gw_num)
 
-    manager_data = get_manager_data(manager_id)
-
-    if manager_data:
-        manager_name = manager_data['player_first_name'] + ' ' + manager_data['player_last_name']
-        team_name = manager_data['name']
-        total_points = manager_data['summary_overall_points']
-        rank = manager_data['summary_overall_rank']
-        transfers_made = manager_data['last_deadline_total_transfers']
-
-        print(f"Manager: {manager_name} (ID: {manager_id})")
-        print(f"Team Name: {team_name}")
-        print(f"Total Points: {total_points}")
-        print(f"Overall Rank: {rank}")
-        print(f"Transfers Made: {transfers_made}")
-    else:
-        print("Manager data retrieval failed.")
+    
