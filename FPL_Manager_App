@@ -1,0 +1,33 @@
+import requests
+
+def get_manager_data(manager_id):
+    try:
+        # Fetch manager data using requests
+        manager_url = f"https://fantasy.premierleague.com/api/entry/{manager_id}/"
+        response = requests.get(manager_url)
+        manager_data = response.json()
+
+        return manager_data
+    except Exception as e:
+        print("Error fetching manager data:", e)
+        return None
+
+if __name__ == "__main__":
+    manager_id = 501662  # Change this to the desired manager ID
+
+    manager_data = get_manager_data(manager_id)
+
+    if manager_data:
+        manager_name = manager_data['player_first_name'] + ' ' + manager_data['player_last_name']
+        team_name = manager_data['name']
+        total_points = manager_data['summary_overall_points']
+        rank = manager_data['summary_overall_rank']
+        transfers_made = manager_data['last_deadline_total_transfers']
+
+        print(f"Manager: {manager_name} (ID: {manager_id})")
+        print(f"Team Name: {team_name}")
+        print(f"Total Points: {total_points}")
+        print(f"Overall Rank: {rank}")
+        print(f"Transfers Made: {transfers_made}")
+    else:
+        print("Manager data retrieval failed.")
