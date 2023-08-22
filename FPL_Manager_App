@@ -42,7 +42,7 @@ def find_players_with_high_expected_goal_involvement(event):
             else:
                 team_name = "Unknown"
 
-            if expected_goal_involvement > 0.5: #and expected_goal_involvement > (goals + assists):
+            if expected_goal_involvement > 0.7 or goals >= 1 or assists >= 1: #and expected_goal_involvement > (goals + assists):
                 players_with_high_expected_goal_involvement.append({
                     "id": player_id,
                     "name": player_data.get(player_id, {}).get("name", "Unknown"),
@@ -131,8 +131,9 @@ if __name__ == "__main__":
 
     event_to_check = gw_num # Change this to the desired event (gameweek)
 ##############################################################################
-    '''players = find_players_with_high_expected_goal_involvement(event_to_check)
+    players = find_players_with_high_expected_goal_involvement(event_to_check)
 ###############################################################################
+    print("List of players with high attacking potential")        
     if players:
         for player in players:
             player_name = player["name"]
@@ -151,10 +152,11 @@ if __name__ == "__main__":
             #print(f"Explain: {explain}")
             print("-" * 40)
     else:
-        print("No players found with high expected goal involvement.")'''
+        print("No players found with high expected goal involvement.")
 ###############################################################################
-    players = find_players_with_high_cleansheet_chance(event_to_check)
+    ''' players = find_players_with_high_cleansheet_chance(event_to_check)
 ###############################################################################
+    print("List of players with high cleansheet chacne")
     if players:
         for player in players:
             player_name = player["name"]
@@ -173,4 +175,4 @@ if __name__ == "__main__":
             #print(f"Explain: {explain}")
             print("-" * 40)
     else:
-        print("No players found with high expected goal involvement.")
+        print("No players found with high expected goal involvement.")'''
