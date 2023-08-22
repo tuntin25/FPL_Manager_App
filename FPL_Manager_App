@@ -42,7 +42,7 @@ def find_players_with_high_expected_goal_involvement(event):
             else:
                 team_name = "Unknown"
 
-            if expected_goal_involvement > 0.7 or goals >= 1 or assists >= 1: #and expected_goal_involvement > (goals + assists):
+            if expected_goal_involvement > 0.75 or (goals or assists >= 1): #and expected_goal_involvement > (goals + assists):
                 players_with_high_expected_goal_involvement.append({
                     "id": player_id,
                     "name": player_data.get(player_id, {}).get("name", "Unknown"),
