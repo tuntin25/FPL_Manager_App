@@ -6,47 +6,171 @@ def get_manager_data(manager_id):
         manager_url = f"https://fantasy.premierleague.com/api/entry/{manager_id}/"
         response = requests.get(manager_url)
         manager_data = response.json()
-
-        if manager_data:
-            manager_name = manager_data['player_first_name'] + ' ' + manager_data['player_last_name']
-            team_name = manager_data['name']
-            total_points = manager_data['summary_overall_points']
-            rank = manager_data['summary_overall_rank']
-            gw_num = manager_data['current_event']
-            gw_points = manager_data['summary_event_points']
-            transfers_made = manager_data['last_deadline_total_transfers']
-
-            print(f"Manager: {manager_name} (ID: {manager_id})")
-            print(f"Team Name: {team_name}")
-            print(f"Overall Rank: {rank}")
-            print(f"Total Points: {total_points}")
-            print(f"GW {gw_num} Points: {gw_points}")
-            print(f"Transfers Made: {transfers_made}")
-        else:
-            print("Manager data retrieval failed.")
-
         
         return manager_data
     except Exception as e:
         print("Error fetching manager data:", e)
         return None
 
-def get_player_data(gw_num):
-    # Fetch manager data using requests
-    player_url = f"https://fantasy.premierleague.com/api/event/2/live/"
-    response = requests.get(player_url)
-    player_data = response.json()
-    player_id = player_data['id']
-    player_xgi = player_data['expected_goal_involvements']
-    player_xg = player_data['expected_goals']
-    player_xa = player_data['expected_assists']
-    if player_data['expected_goal_involvements']>player_data['expected_goals'] + player_data['expected_assists']:
-        print(f"Player ID: ")
+def find_players_with_high_expected_goal_involvement(event):
+    player_url = f"https://fantasy.premierleague.com/api/event/{event}/live/"
+    player_info_url = "https://fantasy.premierleague.com/api/bootstrap-static/"
+
+    try:
+        response = requests.get(player_url)
+        data = response.json()
+
+        player_info_response = requests.get(player_info_url)
+        player_info_data = player_info_response.json()
+
+        team_info = {team["id"]: team["name"] for team in player_info_data["teams"]}
+        player_data = {player["id"]: {"name": player["web_name"], "team_id": player["team"] } for player in player_info_data["elements"]}
+
+        players_with_high_expected_goal_involvement = []
+
+        for player in data["elements"]:
+            player_id = player["id"]
+            expected_goal_involvement = float(player["stats"]["expected_goal_involvements"])
+            goals = player["stats"]["goals_scored"]
+            assists = player["stats"]["assists"]
+            total_points = player["stats"]["total_points"]
+            #explain = player["stats"]["explain"]
+            team_id = player_data.get(player_id, {}).get("team_id")
+
+            if team_id:
+                team_name = team_info.get(team_id, "Unknown")
+            else:
+                team_name = "Unknown"
+
+            if expected_goal_involvement > 0.5: #and expected_goal_involvement > (goals + assists):
+                players_with_high_expected_goal_involvement.append({
+                    "id": player_id,
+                    "name": player_data.get(player_id, {}).get("name", "Unknown"),
+                    "team_name": team_name,
+                    "expected_goal_involvement": expected_goal_involvement,
+                    "goals": goals,
+                    "assists": assists,
+                    "total_points": total_points,
+                    #"explain": explain
+                })  
+
+        return players_with_high_expected_goal_involvement
+
+    except Exception as e:
+        print("Error fetching data:", e)
+        return []
+    
+def find_players_with_high_cleansheet_chance(event):
+    player_url = f"https://fantasy.premierleague.com/api/event/{event}/live/"
+    player_info_url = "https://fantasy.premierleague.com/api/bootstrap-static/"
+
+    try:
+        response = requests.get(player_url)
+        data = response.json()
+
+        player_info_response = requests.get(player_info_url)
+        player_info_data = player_info_response.json()
+
+        team_info = {team["id"]: team["name"] for team in player_info_data["teams"]}
+        player_data = {player["id"]: {"name": player["web_name"], "team_id": player["team"] } for player in player_info_data["elements"]}
+
+        players_with_high_cleansheet_chance = []
+
+        for player in data["elements"]:
+            player_id = player["id"]
+            expected_goals_conceded = float(player["stats"]["expected_goals_conceded"])
+            goals_conceded = player["stats"]["goals_conceded"]
+            minutes = player["stats"]["minutes"]
+            total_points = player["stats"]["total_points"]
+            #explain = player["stats"]["explain"]
+            team_id = player_data.get(player_id, {}).get("team_id")
+
+            if team_id:
+                team_name = team_info.get(team_id, "Unknown")
+            else:
+                team_name = "Unknown"
+
+            if minutes > 60 and expected_goals_conceded > goals_conceded and expected_goals_conceded < 0.5:
+                players_with_high_cleansheet_chance.append({
+                    "id": player_id,
+                    "name": player_data.get(player_id, {}).get("name", "Unknown"),
+                    "team_name": team_name,
+                    "expected_goals_conceded": expected_goals_conceded,
+                    "goals_conceded": goals_conceded,
+                    "minutes": minutes,
+                    "total_points": total_points,
+                    #"explain": explain
+                })  
+
+        return players_with_high_cleansheet_chance
+
+    except Exception as e:
+        print("Error fetching data:", e)
+        return []
 
 if __name__ == "__main__":
     manager_id = 501662  # Change this to the desired manager ID
-    gw_num = 2
-    get_manager_data(manager_id)
-    get_player_data(gw_num)
+    manager_data = get_manager_data(manager_id)
+    if manager_data:
+        manager_name = manager_data['player_first_name'] + ' ' + manager_data['player_last_name']
+        team_name = manager_data['name']
+        total_points = manager_data['summary_overall_points']
+        rank = manager_data['summary_overall_rank']
+        gw_num = manager_data['current_event']
+        gw_points = manager_data['summary_event_points']
+        transfers_made = manager_data['last_deadline_total_transfers']
+        print("-" * 40)
+        print(f"Manager: {manager_name} (ID: {manager_id})")
+        print(f"Team Name: {team_name}")
+        print(f"Overall Rank: {rank}")
+        print(f"Total Points: {total_points}")
+        print(f"GW {gw_num} Points: {gw_points}")
+        print("-" * 40)
+    else:
+        print("Manager data retrieval failed.")
 
-    
+    event_to_check = gw_num # Change this to the desired event (gameweek)
+##############################################################################
+    '''players = find_players_with_high_expected_goal_involvement(event_to_check)
+###############################################################################
+    if players:
+        for player in players:
+            player_name = player["name"]
+            team_name = player["team_name"]
+            expected_goal_involvement = player["expected_goal_involvement"]
+            goals = player["goals"]
+            assists = player["assists"]
+            player_points = player["total_points"]
+            #explain = player["explain"]
+            print(f"Player Name: {player_name}")
+            print(f"Team Name: {team_name}")
+            print(f"Expected Goal Involvement: {expected_goal_involvement}")
+            print(f"Goals: {goals}")
+            print(f"Assists: {assists}")
+            print(f"Points: {player_points}")
+            #print(f"Explain: {explain}")
+            print("-" * 40)
+    else:
+        print("No players found with high expected goal involvement.")'''
+###############################################################################
+    players = find_players_with_high_cleansheet_chance(event_to_check)
+###############################################################################
+    if players:
+        for player in players:
+            player_name = player["name"]
+            team_name = player["team_name"]
+            expected_goals_conceded = player["expected_goals_conceded"]
+            goals_conceded = player["goals_conceded"]
+            minutes = player["minutes"]
+            player_points = player["total_points"]
+            #explain = player["explain"]
+            print(f"Player Name: {player_name}")
+            print(f"Team Name: {team_name}")
+            print(f"Expected Goal Conceded: {expected_goals_conceded}")
+            print(f"Goals Conceded: {goals_conceded}")
+            print(f"Minutes: {minutes}")
+            print(f"Points: {player_points}")
+            #print(f"Explain: {explain}")
+            print("-" * 40)
+    else:
+        print("No players found with high expected goal involvement.")
